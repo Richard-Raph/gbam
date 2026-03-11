@@ -1,0 +1,90 @@
+{
+  "name": "gbam",
+  "displayName": "gbam",
+  "description": "Satisfying GBAM sound when your code succeeds",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.110.0"
+  },
+  "categories": [
+    "Testing",
+    "Debuggers",
+    "Visualization",
+    "Other"
+  ],
+  "keywords": [
+    "success",
+    "sound",
+    "gbam",
+    "nigeria",
+    "africa",
+    "meme"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "gbam.enable",
+        "title": "Enable GBAM",
+        "category": "GBAM"
+      },
+      {
+        "command": "gbam.disable",
+        "title": "Disable GBAM",
+        "category": "GBAM"
+      },
+      {
+        "command": "gbam.test",
+        "title": "Test GBAM Sound",
+        "category": "GBAM"
+      }
+    ],
+    "configuration": {
+      "title": "GBAM",
+      "properties": {
+        "gbam.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Play GBAM on success"
+        },
+        "gbam.volume": {
+          "type": "number",
+          "default": 0.7,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Volume (0-1)"
+        },
+        "gbam.triggerOn": {
+          "type": "array",
+          "default": [
+            "test",
+            "build",
+            "debug"
+          ],
+          "description": "When to trigger: test, build, debug, save"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.110.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "typescript-eslint": "^8.56.1",
+    "eslint": "^9.39.3",
+    "typescript": "^5.9.3",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2"
+  }
+}
