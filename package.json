@@ -1,70 +1,84 @@
 {
   "name": "gbam",
-  "displayName": "gbam",
-  "description": "Satisfying GBAM sound when your code succeeds",
+  "displayName": "Gbam",
+  "description": "Satisfying Gbam sound when your code succeeds",
   "version": "0.0.1",
+  "publisher": "RichardRapahel",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Richard-Raph/gbam"
+  },
+  "bugs": {
+    "url": "https://github.com/Richard-Raph/gbam/issues"
+  },
+  "homepage": "https://github.com/Richard-Raph/gbam#readme",
+  "icon": "media/gbam.png",
   "engines": {
     "vscode": "^1.110.0"
   },
   "categories": [
     "Testing",
-    "Debuggers",
-    "Visualization",
     "Other"
   ],
   "keywords": [
-    "success",
-    "sound",
-    "gbam",
     "nigeria",
+    "success",
     "africa",
+    "sound",
+    "build",
+    "gbam",
+    "test",
     "meme"
   ],
   "activationEvents": [
     "onStartupFinished"
   ],
   "main": "./out/extension.js",
+  "files": [
+    "out",
+    "media"
+  ],
   "contributes": {
     "commands": [
       {
         "command": "gbam.enable",
-        "title": "Enable GBAM",
-        "category": "GBAM"
+        "title": "Enable Gbam",
+        "category": "Gbam"
       },
       {
         "command": "gbam.disable",
-        "title": "Disable GBAM",
-        "category": "GBAM"
+        "title": "Disable Gbam",
+        "category": "Gbam"
       },
       {
         "command": "gbam.test",
-        "title": "Test GBAM Sound",
-        "category": "GBAM"
+        "title": "Test Gbam Sound",
+        "category": "Gbam"
       }
     ],
     "configuration": {
-      "title": "GBAM",
+      "title": "Gbam",
       "properties": {
         "gbam.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Play GBAM on success"
+          "description": "Play Gbam when success is detected"
         },
         "gbam.volume": {
           "type": "number",
           "default": 0.7,
           "minimum": 0,
           "maximum": 1,
-          "description": "Volume (0-1)"
+          "description": "Sound volume (0-1)"
         },
         "gbam.triggerOn": {
           "type": "array",
           "default": [
             "test",
-            "build",
             "debug"
           ],
-          "description": "When to trigger: test, build, debug, save"
+          "description": "Events that trigger Gbam"
         }
       }
     }

@@ -1,71 +1,68 @@
-# gbam README
+# gbam
 
-This is the README for your extension "gbam". After writing up a brief description, we recommend including the following sections.
+&gt; *"When your code finally works, you need to hear it."*
+
+**Gbam** plays a satisfying Nigerian "Gbam!" sound effect every time your tests pass, builds succeed, or debug sessions finish successfully. Because success should feel good.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- 🔊 **Satisfying sound** on every success — tests, builds, debug sessions
+- 🎯 **Smart detection** — automatically detects task completion, debug termination, and terminal success
+- ⏱️ **Cooldown protection** — 3-second debounce prevents sound spam
+- 🎚️ **Volume control** — adjustable from 0.0 to 1.0 in settings
+- 💻 **Cross-platform** — works on macOS, Linux, and Windows
+- 🔘 **Status bar integration** — click "💥 Gbam" to test the sound anytime
 
-For example if there is an image subfolder under your extension project workspace:
+![Gbam Status Bar](media/status-bar.png)
 
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+&gt; Tip: The status bar item shows "💥 Gbam" and can be clicked to test the sound manually.
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+- VS Code 1.110.0 or higher
+- System audio working (macOS: `afplay`, Linux: `paplay`/`aplay`, Windows: PowerShell with .NET)
+
+No external dependencies or Node.js modules required — Gbam uses only VS Code APIs and system commands.
 
 ## Extension Settings
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
 This extension contributes the following settings:
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+* `gbam.enabled`: Enable/disable sound effects (default: `true`)
+* `gbam.volume`: Sound volume from 0.0 to 1.0 (default: `0.7`)
+* `gbam.triggerOn`: Array of events that trigger Gbam — `["test", "debug"]` by default
 
 ## Known Issues
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+- Debug session success detection uses heuristics (no direct exit code available from VS Code API)
+- Terminal success detection only works for named terminals (e.g., "npm test", "build")
+- Linux requires `paplay` (PulseAudio) or `aplay` (ALSA) installed
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
+### 0.0.1
 
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
+Initial release of Gbam:
+- Task success detection (npm, yarn, pnpm, build, test, compile, run)
+- Debug session termination detection
+- Terminal close with exit code 0 detection
+- Manual test command via status bar or command palette
+- Volume and enable/disable configuration
 
 ---
 
-## Following extension guidelines
+## Contributing
 
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
+Issues and pull requests are welcome! 
 
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
+* [Open an issue](https://github.com/Richard-Raph/gbam/issues)
+* [Submit a pull request](https://github.com/Richard-Raph/gbam/pulls)
 
-## Working with Markdown
+### Development Setup
 
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+```bash
+git clone https://github.com/Richard-Raph/gbam.git
+cd gbam
+npm install
+npm run compile
+# Press F5 to test in VS Code
