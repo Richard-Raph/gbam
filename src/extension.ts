@@ -1,170 +1,188 @@
-import * as path from 'path';
-import * as vscode from 'vscode';
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import * as vscode from "vscode";
+import * as path from "path";
+import { exec } from "child_process";
+import { promisify } from "util";
 
 const execAsync = promisify(exec);
 
-// State
 let isEnabled = true;
 let lastTriggerTime = 0;
 let outputChannel: vscode.OutputChannel;
 let statusBarItem: vscode.StatusBarItem;
 
-// Config
-const COOLDOWN_MS = 3000;        // 3s between Gbams
-const DRAMATIC_DELAY_MS = 150;   // Suspense before impact
+const COOLDOWN_MS = 3000;
+const FLASH_DURATION_MS = 600;
+const DRAMATIC_DELAY_MS = 150;
 
-export function activate(context: vscode.ExtensionContext) {
-	outputChannel = vscode.window.createOutputChannel('Gbam');
+export function activate(context: vscode.ExtensionContext): void {
+    outputChannel = vscode.window.createOutputChannel("Gbam");
 
-	// Create status bar item
-	statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-	statusBarItem.text = '💥 Gbam';
-	statusBarItem.tooltip = 'Click to test Gbam sound';
-	statusBarItem.command = 'gbam.test';
-	statusBarItem.show();
-	context.subscriptions.push(statusBarItem);
+    statusBarItem = vscode.window.createStatusBarItem(
+        vscode.StatusBarAlignment.Right,
+        100
+    );
+    statusBarItem.text = "💥 Gbam";
+    statusBarItem.tooltip = "Click to test Gbam";
+    statusBarItem.command = "gbam.test";
+    statusBarItem.show();
+    context.subscriptions.push(statusBarItem);
 
-	// Load config
-	const config = vscode.workspace.getConfiguration('gbam');
-	isEnabled = config.get('enabled', true);
+    const config = vscode.workspace.getConfiguration("gbam");
+    const enabledSetting = config.get<boolean>("enabled");
+    if (enabledSetting !== undefined) {
+        isEnabled = enabledSetting;
+    }
 
-	// Commands
-	context.subscriptions.push(
-		vscode.commands.registerCommand('gbam.enable', () => {
-			isEnabled = true;
-			vscode.window.showInformationMessage('💥 Gbam enabled!');
-		}),
+    // Commands
+    context.subscriptions.push(
+        vscode.commands.registerCommand("gbam.enable", () => {
+            isEnabled = true;
+            vscode.window.showInformationMessage("💥 Gbam enabled!");
+        }),
+        vscode.commands.registerCommand("gbam.disable", () => {
+            isEnabled = false;
+            vscode.window.showInformationMessage("Gbam disabled");
+        }),
+        vscode.commands.registerCommand("gbam.test", () => {
+            triggerGbam("Manual test");
+        })
+    );
 
-		vscode.commands.registerCommand('gbam.disable', () => {
-			isEnabled = false;
-			vscode.window.showInformationMessage('Gbam disabled');
-		}),
+    // Task success
+    context.subscriptions.push(
+        vscode.tasks.onDidEndTaskProcess((event) => {
+            if (!isEnabled){ return;}
+            if (event.exitCode !== 0){ return;}
 
-		vscode.commands.registerCommand('gbam.test', () => {
-			triggerGbam(context, 'Manual test');
-		})
-	);
+            const taskName = event.execution.task.name.toLowerCase();
+            if (isLikelyDevCommand(taskName)) {
+                triggerGbam(`Task success: ${taskName}`);
+            }
+        })
+    );
 
-	// Hook 1: Task success (MOST RELIABLE) [^101^][^104^]
-	context.subscriptions.push(
-		vscode.tasks.onDidEndTaskProcess((event) => {
-			if (!isEnabled) return;
-			if (event.exitCode !== 0) return; // Only success
+    // Debug session finished
+    context.subscriptions.push(
+        vscode.debug.onDidTerminateDebugSession(() => {
+            if (!isEnabled){ return;}
+            triggerGbam("Debug session finished");
+        })
+    );
 
-			const taskName = event.execution.task.name.toLowerCase();
-			const triggers = ['build', 'test', 'compile', 'run', 'npm', 'yarn', 'pnpm'];
+    // Terminal commands
+    const runningCommands = new Map<string, string>();
+    context.subscriptions.push(
+        vscode.window.onDidStartTerminalShellExecution((event) => {
+            if (!isEnabled){ return;}
+            const cmdLine = event.execution.commandLine.value;
+            if (typeof cmdLine !== "string"){ return;}
+            const command = cmdLine.toLowerCase();
+            if (!isLikelyDevCommand(command)){ return;}
+            runningCommands.set(event.terminal.name, command);
+        })
+    );
 
-			if (triggers.some(t => taskName.includes(t))) {
-				triggerGbam(context, `Task: ${event.execution.task.name}`);
-			}
-		})
-	);
+    context.subscriptions.push(
+        vscode.window.onDidCloseTerminal((terminal) => {
+            if (!isEnabled){ return;}
+            const command = runningCommands.get(terminal.name);
+            if (!command){ return;}
+            runningCommands.delete(terminal.name);
+            triggerGbam(`Terminal finished: ${command}`);
+        })
+    );
 
-	// Hook 2: Debug session ended (no error = success) [^107^]
-	context.subscriptions.push(
-		vscode.debug.onDidTerminateDebugSession((session) => {
-			if (!isEnabled) return;
-
-			// We can't easily get exit code from debug session directly
-			// But termination without error usually means success
-			// Use a heuristic: if session lasted > 2s, it probably ran successfully
-			triggerGbam(context, 'Debug finished');
-		})
-	);
-
-	// Hook 3: Terminal closed with success (optional, can be noisy)
-	context.subscriptions.push(
-		vscode.window.onDidCloseTerminal((terminal) => {
-			if (!isEnabled) return;
-			// Only trigger for named terminals that look like build/test
-			const name = terminal.name.toLowerCase();
-			if (name.includes('build') || name.includes('test') || name.includes('watch')) {
-				// Check exit status if available
-				if (terminal.exitStatus && terminal.exitStatus.code === 0) {
-					triggerGbam(context, `Terminal: ${terminal.name}`);
-				}
-			}
-		})
-	);
-
-	outputChannel.appendLine('💥 Gbam activated and listening...');
+    outputChannel.appendLine("💥 Gbam activated");
 }
 
-async function triggerGbam(
-	context: vscode.ExtensionContext,
-	reason: string
-) {
-	// Cooldown check
-	const now = Date.now();
-	if (now - lastTriggerTime < COOLDOWN_MS) {
-		return;
-	}
-	lastTriggerTime = now;
-
-	outputChannel.appendLine(`Gbam triggered: ${reason}`);
-
-	// Dramatic pause
-	await delay(DRAMATIC_DELAY_MS);
-
-	// Play sound
-	await playGbam(context);
-
-	// Status bar flash
-	showGbamStatus(reason);
+function isLikelyDevCommand(command: string): boolean {
+    const keywords = ["build", "test", "compile", "dev", "start", "run", "serve", "deploy"];
+    return keywords.some((k) => command.includes(k));
 }
 
-async function playGbam(context: vscode.ExtensionContext) {
-	try {
-		const config = vscode.workspace.getConfiguration('gbam');
-		const volume = config.get<number>('volume', 0.7);
+async function triggerGbam(reason: string): Promise<void> {
+    const now = Date.now();
+    if (now - lastTriggerTime < COOLDOWN_MS){ return;}
+    lastTriggerTime = now;
 
-		// FIXED: Use context.extensionPath (not extensionUri.fsPath)
-		const soundPath = path.join(context.extensionPath, 'media', 'gbam.mp3');
+    await delay(DRAMATIC_DELAY_MS);
 
-		const platform = process.platform;
-		let cmd: string;
-
-		if (platform === 'darwin') {
-			// macOS
-			cmd = `afplay "${soundPath}" -v ${volume}`;
-		} else if (platform === 'linux') {
-			// Linux - try paplay first, fallback to aplay
-			cmd = `paplay "${soundPath}" --volume ${Math.floor(volume * 65535)} 2>/dev/null || aplay "${soundPath}"`;
-		} else {
-			// Windows
-			cmd = `powershell -c "(New-Object System.Media.SoundPlayer '${soundPath}').PlaySync()"`;
-		}
-
-		await execAsync(cmd, { timeout: 5000 });
-	} catch (err) {
-		outputChannel.appendLine(`Audio error: ${err}`);
-	}
+    await playGbam();
+    flashAllEditors();
+    showGbamStatus(reason);
+    vscode.window.showInformationMessage(`💥 GBAM! ${reason}`);
 }
 
-function showGbamStatus(reason: string) {
-	// Flash status bar
-	const originalText = statusBarItem.text;
-	statusBarItem.text = '💥 Gbam!';
-	statusBarItem.tooltip = `Last: ${reason}`;
-	statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+async function playGbam(): Promise<void> {
+    try {
+        const soundPath = path.join(__dirname, "..", "media", "gbam.wav");
+        let command = "";
 
-	// Reset after 2 seconds
-	setTimeout(() => {
-		statusBarItem.text = originalText;
-		statusBarItem.backgroundColor = undefined;
-	}, 2000);
+        switch (process.platform) {
+            case "darwin":
+                command = `afplay "${soundPath}"`;
+                break;
+            case "linux":
+                command = `aplay "${soundPath}"`;
+                break;
+            case "win32":
+                const escaped = soundPath.replace(/\\/g, "\\\\");
+                command = `powershell -c (New-Object Media.SoundPlayer '${escaped}').PlaySync();`;
+                break;
+        }
 
-	// Also show message
-	vscode.window.setStatusBarMessage(`💥 Gbam — ${reason}`, 2500);
+        if (command){ await execAsync(command, { windowsHide: true });}
+    } catch (err) {
+        outputChannel.appendLine("Gbam sound failed to play");
+    }
+}
+
+function flashAllEditors(): void {
+    const editors = vscode.window.visibleTextEditors;
+    if (!editors.length){ return;}
+
+    for (const editor of editors) {
+        const decoration = vscode.window.createTextEditorDecorationType({
+            borderWidth: "6px",
+            borderStyle: "solid",
+            borderColor: "#4dff88",
+            backgroundColor: "rgba(77, 255, 136, 0.15)",
+            isWholeLine: true,
+        });
+
+        const ranges: vscode.Range[] = [];
+        for (const visibleRange of editor.visibleRanges) {
+            for (let line = visibleRange.start.line; line <= visibleRange.end.line; line++) {
+                ranges.push(
+                    new vscode.Range(line, 0, line, editor.document.lineAt(line).text.length)
+                );
+            }
+        }
+
+        editor.setDecorations(decoration, ranges);
+
+        setTimeout(() => decoration.dispose(), FLASH_DURATION_MS);
+    }
+}
+
+function showGbamStatus(reason: string): void {
+    const originalText = statusBarItem.text;
+    statusBarItem.text = "💥 GBAM!";
+    statusBarItem.backgroundColor = new vscode.ThemeColor("statusBarItem.warningBackground");
+
+    setTimeout(() => {
+        statusBarItem.text = originalText;
+        statusBarItem.backgroundColor = undefined;
+    }, 2000);
+
+    vscode.window.setStatusBarMessage(`💥 GBAM — ${reason}`, 2500);
 }
 
 function delay(ms: number): Promise<void> {
-	return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export function deactivate() {
-	outputChannel?.dispose();
-	statusBarItem?.dispose();
+export function deactivate(): void {
+    outputChannel?.dispose();
+    statusBarItem?.dispose();
 }
