@@ -1,68 +1,101 @@
-# gbam
+# Gbam
 
-&gt; *"When your code finally works, you need to hear it."*
+> *"When your code finally works, you need to hear it."*
 
-**Gbam** plays a satisfying Nigerian "Gbam!" sound effect every time your tests pass, builds succeed, or debug sessions finish successfully. Because success should feel good.
+**Gbam** plays a satisfying Nigerian "Gbam!" sound effect every time your tests pass, builds succeed, or debug sessions finish. Because success should feel good.
+
+---
 
 ## Features
 
-- 🔊 **Satisfying sound** on every success — tests, builds, debug sessions
-- 🎯 **Smart detection** — automatically detects task completion, debug termination, and terminal success
+- 🔊 **Instant sound** on every success — tasks, builds, debug sessions
+- 💥 **Full status bar flash** — the entire bar lights up green on success
 - ⏱️ **Cooldown protection** — 3-second debounce prevents sound spam
-- 🎚️ **Volume control** — adjustable from 0.0 to 1.0 in settings
-- 💻 **Cross-platform** — works on macOS, Linux, and Windows
-- 🔘 **Status bar integration** — click "💥 Gbam" to test the sound anytime
+- 💻 **Cross-platform** — works on macOS, Linux, and Windows with no installs
+- 🔘 **Status bar button** — click `💥 Gbam` to test sound and flash anytime
 
-![Gbam Status Bar](media/status-bar.png)
+---
 
-&gt; Tip: The status bar item shows "💥 Gbam" and can be clicked to test the sound manually.
+## How It Triggers
+
+Gbam fires automatically when:
+
+- A **task completes successfully** (exit code 0) with a name matching: `build`, `test`, `dev`, `start`, `run`, `compile`, or `deploy`
+- A **debug session ends** (launch-type sessions only)
+
+You can also trigger it manually by clicking `💥 Gbam` in the status bar or running **"Test Gbam Sound"** from the Command Palette (`Ctrl+Shift+P`).
+
+---
 
 ## Requirements
 
-- VS Code 1.110.0 or higher
-- System audio working (macOS: `afplay`, Linux: `paplay`/`aplay`, Windows: PowerShell with .NET)
+- VS Code 1.90.0 or higher
+- No npm packages or external installs required
 
-No external dependencies or Node.js modules required — Gbam uses only VS Code APIs and system commands.
+Audio is handled by built-in OS tools:
 
-## Extension Settings
+| Platform | Tool used | Ships with OS? |
+|---|---|---|
+| macOS | `afplay` | ✅ Always |
+| Linux | `paplay` → `aplay` → `ffplay` (first found) | ✅ Most distros |
+| Windows | `wscript.exe` + WMPlayer (VBScript) | ✅ Since Windows 98 |
 
-This extension contributes the following settings:
+---
 
-* `gbam.enabled`: Enable/disable sound effects (default: `true`)
-* `gbam.volume`: Sound volume from 0.0 to 1.0 (default: `0.7`)
-* `gbam.triggerOn`: Array of events that trigger Gbam — `["test", "debug"]` by default
+## Commands
 
-## Known Issues
+All commands are available via the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`):
 
-- Debug session success detection uses heuristics (no direct exit code available from VS Code API)
-- Terminal success detection only works for named terminals (e.g., "npm test", "build")
-- Linux requires `paplay` (PulseAudio) or `aplay` (ALSA) installed
+| Command | Description |
+|---|---|
+| `Gbam: Test Gbam Sound` | Trigger sound and flash manually |
+| `Gbam: Enable Gbam` | Re-enable after disabling |
+| `Gbam: Disable Gbam` | Silence Gbam without uninstalling |
+
+---
+
+## Known Limitations
+
+- **Debug session detection** uses a heuristic — it fires when a `launch`-type session ends, but VS Code does not expose an exit code for debug sessions, so it cannot distinguish a clean exit from a user-stopped session
+- **Linux audio** requires at least one of `paplay`, `aplay`, or `ffplay` to be installed. Most desktop Linux distros include one by default
+
+---
 
 ## Release Notes
 
 ### 0.0.1
 
-Initial release of Gbam:
-- Task success detection (npm, yarn, pnpm, build, test, compile, run)
+Initial release:
+- Task success detection (`build`, `test`, `dev`, `start`, `run`, `compile`, `deploy`)
 - Debug session termination detection
-- Terminal close with exit code 0 detection
-- Manual test command via status bar or command palette
-- Volume and enable/disable configuration
+- Full status bar green flash on success
+- Manual test via status bar click or Command Palette
+- Cooldown-aware click handler (shows remaining time if clicked during cooldown)
+- Cross-platform audio with automatic fallback chain
 
 ---
 
-## Contributing
-
-Issues and pull requests are welcome! 
-
-* [Open an issue](https://github.com/Richard-Raph/gbam/issues)
-* [Submit a pull request](https://github.com/Richard-Raph/gbam/pulls)
-
-### Development Setup
+## Development
 
 ```bash
 git clone https://github.com/Richard-Raph/gbam.git
 cd gbam
 npm install
 npm run compile
-# Press F5 to test in VS Code
+# Press F5 in VS Code to launch the Extension Development Host
+```
+
+To test manually inside the dev host, click `💥 Gbam` in the status bar or run **"Test Gbam Sound"** from the Command Palette.
+
+Before packaging for production:
+1. Change `ENV_MODE` from `"dev"` to `"prod"` in `extension.ts`
+2. Run `vsce package`
+
+---
+
+## Contributing
+
+Issues and pull requests are welcome.
+
+- [Open an issue](https://github.com/Richard-Raph/gbam/issues)
+- [Submit a pull request](https://github.com/Richard-Raph/gbam/pulls)

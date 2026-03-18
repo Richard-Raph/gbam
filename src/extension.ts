@@ -10,10 +10,10 @@ import { spawn } from "child_process";
 // ─────────────────────────────────────────────
 
 // ✅ DEV MODE
-const ENV_MODE: "dev" | "prod" = "dev";
+// const ENV_MODE: "dev" | "prod" = "dev";
 
 // 🚀 PROD MODE — uncomment before vsce package
-// const ENV_MODE: "dev" | "prod" = "prod";
+const ENV_MODE: "dev" | "prod" = "prod";
 
 // ─────────────────────────────────────────────
 
