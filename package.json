@@ -4,7 +4,7 @@
   "description": "Satisfying Gbam sound when your code succeeds",
   "version": "0.0.1",
   "publisher": "RichardRapahel",
-  "license": "SEE LICENSE IN <filename>",
+  "license": "SEE LICENSE IN LICENSE",
   "repository": {
     "type": "git",
     "url": "https://github.com/Richard-Raph/gbam"
@@ -15,7 +15,7 @@
   "homepage": "https://github.com/Richard-Raph/gbam#readme",
   "icon": "media/gbam.png",
   "engines": {
-    "vscode": "^1.110.0"
+    "vscode": "^1.90.0"
   },
   "categories": [
     "Testing",
@@ -37,7 +37,8 @@
   "main": "./out/extension.js",
   "files": [
     "out",
-    "media"
+    "media",
+    "LICENSE"
   ],
   "contributes": {
     "commands": [
@@ -56,49 +57,16 @@
         "title": "Test Gbam Sound",
         "category": "Gbam"
       }
-    ],
-    "configuration": {
-      "title": "Gbam",
-      "properties": {
-        "gbam.enabled": {
-          "type": "boolean",
-          "default": true,
-          "description": "Play Gbam when success is detected"
-        },
-        "gbam.volume": {
-          "type": "number",
-          "default": 0.7,
-          "minimum": 0,
-          "maximum": 1,
-          "description": "Sound volume (0-1)"
-        },
-        "gbam.triggerOn": {
-          "type": "array",
-          "default": [
-            "test",
-            "debug"
-          ],
-          "description": "Events that trigger Gbam"
-        }
-      }
-    }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src",
-    "test": "vscode-test"
+    "watch": "tsc -watch -p ./"
   },
   "devDependencies": {
-    "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
-    "@types/vscode": "^1.110.0",
-    "@vscode/test-cli": "^0.0.12",
-    "@vscode/test-electron": "^2.5.2",
-    "eslint": "^9.39.3",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.56.1"
+    "@types/vscode": "^1.90.0",
+    "typescript": "^5.9.3"
   }
 }
