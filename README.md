@@ -56,7 +56,8 @@ All commands are available via the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+
 
 ## Known Limitations
 
-- **Debug session detection** uses a heuristic — it fires when a `launch`-type session ends, but VS Code does not expose an exit code for debug sessions, so it cannot distinguish a clean exit from a user-stopped session
+- **Task success detection is based on exit codes** — Gbam treats any task that exits with code `0` as a success. It cannot distinguish between a true successful run and cases where a process exits cleanly but was manually stopped or did not complete its intended work.
+- **Debug session detection is heuristic-based** — VS Code does not provide an exit code for debug sessions. Gbam triggers when a `launch`-type session ends, but cannot determine whether it ended successfully or was stopped manually.
 - **Linux audio** requires at least one of `paplay`, `aplay`, or `ffplay` to be installed. Most desktop Linux distros include one by default
 
 ---
